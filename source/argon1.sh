@@ -3,22 +3,33 @@
 
 argon_create_file() {
 	if [ -f $1 ]; then
-        sudo rm $1
-    fi
+		sudo rm $1
+	fi
 	sudo touch $1
 	sudo chmod 666 $1
 }
 argon_check_pkg() {
-    RESULT=$(dpkg-query -W -f='${Status}\n' "$1" 2> /dev/null | grep "installed")
+	RESULT=$(dpkg-query -W -f='${Status}\n' "$1" 2> /dev/null | grep "installed")
 
-    if [ "" == "$RESULT" ]; then
-        echo "NG"
-    else
-        echo "OK"
-    fi
+	if [ "" == "$RESULT" ]; then
+		echo "NG"
+	else
+		echo "OK"
+	fi
 }
 
-pkglist=(raspi-gpio python-rpi.gpio python3-rpi.gpio python-smbus python3-smbus i2c-tools)
+CHECKPLATFORM="Others"
+# Check if Raspbian, otherwise Ubuntu
+grep -q -F 'Raspbian' /etc/os-release &> /dev/null
+if [ $? -eq 0 ]
+then
+	CHECKPLATFORM="Raspbian"
+	pkglist=(raspi-gpio python3-rpi.gpio python3-smbus i2c-tools)	
+else
+	# Ubuntu has serial and i2c enabled
+	pkglist=(python3-rpi.gpio python3-smbus i2c-tools)
+fi
+
 for curpkg in ${pkglist[@]}; do
 	sudo apt-get install -y $curpkg
 	RESULT=$(argon_check_pkg "$curpkg")
@@ -31,8 +42,16 @@ for curpkg in ${pkglist[@]}; do
 	fi
 done
 
+# Ubuntu Mate for RPi has raspi-config too
+command -v raspi-config &> /dev/null
+if [ $? -eq 0 ]
+then
+	# Enable i2c and serial
+	sudo raspi-config nonint do_i2c 0
+	sudo raspi-config nonint do_serial 2
+fi
 
-
+# Helper variables
 daemonname="argononed"
 powerbuttonscript=/usr/bin/$daemonname.py
 shutdownscript="/lib/systemd/system-shutdown/"$daemonname"-poweroff.py"
@@ -41,9 +60,6 @@ configscript=/usr/bin/argonone-config
 removescript=/usr/bin/argonone-uninstall
 
 daemonfanservice=/lib/systemd/system/$daemonname.service
-
-sudo raspi-config nonint do_i2c 0
-sudo raspi-config nonint do_serial 0	
 	
 if [ ! -f $daemonconfigfile ]; then
 	# Generate config file for fan speed
@@ -77,7 +93,7 @@ fi
 # Generate script that runs every shutdown event
 argon_create_file $shutdownscript
 
-echo "#!/usr/bin/python" >> $shutdownscript
+echo "#!/usr/bin/python3" >> $shutdownscript
 echo 'import sys' >> $shutdownscript
 echo 'import smbus' >> $shutdownscript
 echo 'import RPi.GPIO as GPIO' >> $shutdownscript
@@ -89,18 +105,21 @@ echo '	bus = smbus.SMBus(0)' >> $shutdownscript
 
 echo 'if len(sys.argv)>1:' >> $shutdownscript
 echo "	bus.write_byte(0x1a,0)"  >> $shutdownscript
+
+# powercut signal
 echo '	if sys.argv[1] == "poweroff" or sys.argv[1] == "halt":'  >> $shutdownscript
 echo "		try:"  >> $shutdownscript
 echo "			bus.write_byte(0x1a,0xFF)"  >> $shutdownscript
 echo "		except:"  >> $shutdownscript
 echo "			rev=0"  >> $shutdownscript
+
 sudo chmod 755 $shutdownscript
 
 # Generate script to monitor shutdown button
 
 argon_create_file $powerbuttonscript
 
-echo "#!/usr/bin/python" >> $powerbuttonscript
+echo "#!/usr/bin/python3" >> $powerbuttonscript
 echo 'import smbus' >> $powerbuttonscript
 echo 'import RPi.GPIO as GPIO' >> $powerbuttonscript
 echo 'import os' >> $powerbuttonscript
@@ -136,6 +155,8 @@ echo '		curpair = curconfig.split("=")' >> $powerbuttonscript
 echo '		tempcfg = float(curpair[0])' >> $powerbuttonscript
 echo '		fancfg = int(float(curpair[1]))' >> $powerbuttonscript
 echo '		if tempval >= tempcfg:' >> $powerbuttonscript
+echo '			if fancfg < 25:' >> $powerbuttonscript
+echo '				return 25' >> $powerbuttonscript
 echo '			return fancfg' >> $powerbuttonscript
 echo '	return 0' >> $powerbuttonscript
 
@@ -183,14 +204,23 @@ echo '		fanconfig = tmpconfig' >> $powerbuttonscript
 echo '	address=0x1a' >> $powerbuttonscript
 echo '	prevblock=0' >> $powerbuttonscript
 echo '	while True:' >> $powerbuttonscript
-echo '		temp = os.popen("vcgencmd measure_temp").readline()' >> $powerbuttonscript
-echo '		temp = temp.replace("temp=","")' >> $powerbuttonscript
-echo '		val = float(temp.replace("'"'"'C",""))' >> $powerbuttonscript
+
+echo '		try:' >> $powerbuttonscript
+echo '			tempfp = open("/sys/class/thermal/thermal_zone0/temp", "r")' >> $powerbuttonscript
+echo '			temp = tempfp.readline()' >> $powerbuttonscript
+echo '			tempfp.close()' >> $powerbuttonscript
+echo '			val = float(int(temp)/1000)' >> $powerbuttonscript
+echo '		except IOError:' >> $powerbuttonscript
+echo '			val = 0' >> $powerbuttonscript
+
 echo '		block = get_fanspeed(val, fanconfig)' >> $powerbuttonscript
 echo '		if block < prevblock:' >> $powerbuttonscript
 echo '			time.sleep(30)' >> $powerbuttonscript
 echo '		prevblock = block' >> $powerbuttonscript
 echo '		try:' >> $powerbuttonscript
+echo '			if block > 0:' >> $powerbuttonscript
+echo '				bus.write_byte(address,100)' >> $powerbuttonscript
+echo '				time.sleep(1)' >> $powerbuttonscript
 echo '			bus.write_byte(address,block)' >> $powerbuttonscript
 echo '		except IOError:' >> $powerbuttonscript
 echo '			temp=""' >> $powerbuttonscript
@@ -265,7 +295,7 @@ argon_create_file $configscript
 
 # Config Script
 echo '#!/bin/bash' >> $configscript
-echo 'daemonconfigfile=/etc/'$daemonname'.conf' >> $configscript
+echo 'daemonconfigfile='$daemonconfigfile >> $configscript
 echo 'echo "--------------------------------------"' >> $configscript
 echo 'echo "Argon One Fan Speed Configuration Tool"' >> $configscript
 echo 'echo "--------------------------------------"' >> $configscript
@@ -446,16 +476,23 @@ sudo systemctl enable $daemonname.service
 
 sudo systemctl start $daemonname.service
 
-if [ -d "/home/pi/Desktop" ]; then
-	sudo wget http://download.argon40.com/ar1config.png -O /usr/share/pixmaps/ar1config.png
-	sudo wget http://download.argon40.com/ar1uninstall.png -O /usr/share/pixmaps/ar1uninstall.png
+
+shortcutfile="/home/pi/Desktop/argonone-config.desktop"
+if [ "$CHECKPLATFORM" = "Raspbian" ] && [ -d "/home/pi/Desktop" ]
+then
+	terminalcmd="lxterminal --working-directory=/home/pi/ -t"
+	if  [ -f "/home/pi/.twisteros.twid" ]
+	then
+		terminalcmd="xfce4-terminal --default-working-directory=/home/pi/ -T"
+	fi
+	sudo wget http://download.argon40.com/ar1config.png -O /usr/share/pixmaps/ar1config.png --quiet
+	sudo wget http://download.argon40.com/ar1uninstall.png -O /usr/share/pixmaps/ar1uninstall.png --quiet
 	# Create Shortcuts
-	shortcutfile="/home/pi/Desktop/argonone-config.desktop"
 	echo "[Desktop Entry]" > $shortcutfile
 	echo "Name=Argon One Configuration" >> $shortcutfile
 	echo "Comment=Argon One Configuration" >> $shortcutfile
 	echo "Icon=/usr/share/pixmaps/ar1config.png" >> $shortcutfile
-	echo 'Exec=lxterminal -t "Argon One Configuration" --working-directory=/home/pi/ -e '$configscript >> $shortcutfile
+	echo 'Exec='$terminalcmd' "Argon One Configuration" -e '$configscript >> $shortcutfile
 	echo "Type=Application" >> $shortcutfile
 	echo "Encoding=UTF-8" >> $shortcutfile
 	echo "Terminal=false" >> $shortcutfile
@@ -467,7 +504,7 @@ if [ -d "/home/pi/Desktop" ]; then
 	echo "Name=Argon One Uninstall" >> $shortcutfile
 	echo "Comment=Argon One Uninstall" >> $shortcutfile
 	echo "Icon=/usr/share/pixmaps/ar1uninstall.png" >> $shortcutfile
-	echo 'Exec=lxterminal -t "Argon One Uninstall" --working-directory=/home/pi/ -e '$removescript >> $shortcutfile
+	echo 'Exec='$terminalcmd' -t "Argon One Uninstall" --working-directory=/home/pi/ -e '$removescript >> $shortcutfile
 	echo "Type=Application" >> $shortcutfile
 	echo "Encoding=UTF-8" >> $shortcutfile
 	echo "Terminal=false" >> $shortcutfile
@@ -475,12 +512,20 @@ if [ -d "/home/pi/Desktop" ]; then
 	chmod 755 $shortcutfile
 fi
 
+# IR config script
+sudo wget https://download.argon40.com/argonone-irconfig.sh -O /usr/bin/argonone-ir --quiet
+sudo chmod 755 /usr/bin/argonone-ir
 
 echo "***************************"
 echo "Argon One Setup Completed."
 echo "***************************"
-echo 
-if [ -d "/home/pi/Desktop" ]; then
+echo
+if [ ! "$CHECKPLATFORM" = "Raspbian" ]
+then
+		echo "You may need to reboot for changes to take effect"
+		echo
+fi 
+if [ -f $shortcutfile ]; then
 	echo Shortcuts created in your desktop.
 else
 	echo Use 'argonone-config' to configure fan
