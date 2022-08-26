@@ -35,8 +35,6 @@ jobs:
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/argonone-irconfig.sh -P ./download
-      - name: Create file with current date
-        run: echo "$(date +"%Y-%m-%d %H:%M:%S UTC")" >> ./download/downloaded_on.txt
       # https://github.com/marketplace/actions/smart-diff
       - name: Smart Diff
         uses: LouisBrunner/diff-action@v0.1.2
