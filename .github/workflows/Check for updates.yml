@@ -1,0 +1,57 @@
+name: Check for updates on Argon ONE (V2) Pi 4 Script
+
+# Manual Action Trigger
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
+# on: [workflow_dispatch]
+
+# Trigger Action every day at 03:00 UTC
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+on:
+  schedule:
+    - cron: '0 3 * * 5'
+
+jobs:
+  Check_for_update:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/marketplace/actions/checkout
+      - name: Checkout
+        uses: actions/checkout@v2.4.2
+      - name: Create download folder
+        run: mkdir -p ./download
+      # https://github.com/marketplace/actions/github-action-for-wget
+      - name: Github Action for wget (argon1.sh)
+        uses: wei/wget@v1.1.1
+        with:
+           args: https://download.argon40.com/argon1.sh -P ./download
+      - name: Github Action for wget (ar1config.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: http://download.argon40.com/ar1config.png -P ./download
+      - name: Github Action for wget (ar1uninstall.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: http://download.argon40.com/ar1uninstall.png -P ./download
+      - name: Github Action for wget (argonone-irconfig.sh)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/argonone-irconfig.sh -P ./download
+      - name: Create file with current date
+        run: echo "$(date +"%Y-%m-%d %H:%M:%S UTC")" >> ./download/downloaded_on.txt
+      # https://github.com/marketplace/actions/smart-diff
+      - name: Smart Diff
+        uses: LouisBrunner/diff-action@v0.1.2
+        with:
+          old: ./source/argon1.sh
+          new: ./download/argon1.sh
+          mode: addition
+          tolerance: mixed-worse
+      - name: Delete ./source
+        run: rm -rf ./source
+      - name: Rename ./download to ./source
+        run: mv ./download ./source
+      # https://github.com/marketplace/actions/git-auto-commit
+      - name: Git Auto Commit
+        uses: stefanzweifel/git-auto-commit-action@v4.14.1
+        with:
+          commit_message: Automated Change by GitHub Actions
