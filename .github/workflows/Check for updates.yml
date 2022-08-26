@@ -1,14 +1,13 @@
 name: Check for updates on Argon ONE (V2) Pi 4 Script
 
-# Manual Action Trigger
-# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
-# on: [workflow_dispatch]
-
-# Trigger Action every day at 03:00 UTC
-# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
 on:
+  # Manual Action Trigger
+  # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
+  workflow_dispatch:
+  # Trigger Action every Friday at 21:00 UTC
+  # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
   schedule:
-    - cron: '0 3 * * 5'
+    - cron: '0 21 * * 5'
 
 jobs:
   Check_for_update:
