@@ -18,14 +18,26 @@ argon_check_pkg() {
 	fi
 }
 
+# Check if Raspbian, Ubuntu, others
 CHECKPLATFORM="Others"
-# Check if Raspbian, otherwise Ubuntu
-grep -q -F 'Raspbian' /etc/os-release &> /dev/null
-if [ $? -eq 0 ]
+if [ -f "/etc/os-release" ]
 then
-	CHECKPLATFORM="Raspbian"
+	source /etc/os-release
+	if [ "$ID" = "raspbian" ]
+	then
+		CHECKPLATFORM="Raspbian"
+	elif [ "$ID" = "ubuntu" ]
+	then
+		CHECKPLATFORM="Ubuntu"
+	fi
+fi
+
+
+if [ "$CHECKPLATFORM" = "Raspbian" ]
+then
 	pkglist=(raspi-gpio python3-rpi.gpio python3-smbus i2c-tools)	
 else
+	# Todo handle lgpio
 	# Ubuntu has serial and i2c enabled
 	pkglist=(python3-rpi.gpio python3-smbus i2c-tools)
 fi
@@ -155,7 +167,9 @@ echo '		curpair = curconfig.split("=")' >> $powerbuttonscript
 echo '		tempcfg = float(curpair[0])' >> $powerbuttonscript
 echo '		fancfg = int(float(curpair[1]))' >> $powerbuttonscript
 echo '		if tempval >= tempcfg:' >> $powerbuttonscript
-echo '			if fancfg < 25:' >> $powerbuttonscript
+echo '			if fancfg < 1:' >> $powerbuttonscript
+echo '				return 0' >> $powerbuttonscript
+echo '			elif fancfg < 25:' >> $powerbuttonscript
 echo '				return 25' >> $powerbuttonscript
 echo '			return fancfg' >> $powerbuttonscript
 echo '	return 0' >> $powerbuttonscript
@@ -317,7 +331,6 @@ echo 'echo "Thank you."' >> $configscript
 
 echo 'get_number () {' >> $configscript
 echo '	read curnumber' >> $configscript
-echo '	re="^[0-9]+$"' >> $configscript
 echo '	if [ -z "$curnumber" ]' >> $configscript
 echo '	then' >> $configscript
 echo '		echo "-2"' >> $configscript
