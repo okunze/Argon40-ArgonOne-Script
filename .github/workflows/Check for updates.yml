@@ -15,7 +15,7 @@ jobs:
     steps:
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3.3.0
       - name: Create download folder
         run: mkdir -p ./download
       # https://github.com/marketplace/actions/github-action-for-wget
@@ -35,20 +35,12 @@ jobs:
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/argonone-irconfig.sh -P ./download
-      # https://github.com/marketplace/actions/smart-diff
-      #- name: Smart Diff
-      #  uses: LouisBrunner/diff-action@v0.1.3
-      #  with:
-      #    old: ./source/argon1.sh
-      #    new: ./download/argon1.sh
-      #    mode: addition
-      #    tolerance: mixed-worse
       - name: Delete ./source
         run: rm -rf ./source
       - name: Rename ./download to ./source
         run: mv ./download ./source
       # https://github.com/marketplace/actions/git-auto-commit
       - name: Git Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v4.15.1
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
         with:
           commit_message: Automated Change by GitHub Actions
