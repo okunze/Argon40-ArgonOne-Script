@@ -26,6 +26,10 @@ then
 	if [ "$ID" = "raspbian" ]
 	then
 		CHECKPLATFORM="Raspbian"
+	elif [ "$ID" = "debian" ]
+	then
+		# For backwards compatibility, continue using raspbian
+		CHECKPLATFORM="Raspbian"
 	elif [ "$ID" = "ubuntu" ]
 	then
 		CHECKPLATFORM="Ubuntu"
@@ -35,7 +39,7 @@ fi
 
 if [ "$CHECKPLATFORM" = "Raspbian" ]
 then
-	pkglist=(raspi-gpio python3-rpi.gpio python3-smbus i2c-tools)	
+	pkglist=(raspi-gpio python3-rpi.gpio python3-smbus i2c-tools)
 else
 	# Todo handle lgpio
 	# Ubuntu has serial and i2c enabled
@@ -71,8 +75,11 @@ daemonconfigfile=/etc/$daemonname.conf
 configscript=/usr/bin/argonone-config
 removescript=/usr/bin/argonone-uninstall
 
+powerbuttonshutdownscript=$powerbuttonscript
+
+
 daemonfanservice=/lib/systemd/system/$daemonname.service
-	
+
 if [ ! -f $daemonconfigfile ]; then
 	# Generate config file for fan speed
 	sudo touch $daemonconfigfile
@@ -107,6 +114,7 @@ argon_create_file $shutdownscript
 
 echo "#!/usr/bin/python3" >> $shutdownscript
 echo 'import sys' >> $shutdownscript
+echo 'import time' >> $shutdownscript
 echo 'import smbus' >> $shutdownscript
 echo 'import RPi.GPIO as GPIO' >> $shutdownscript
 echo 'rev = GPIO.RPI_REVISION' >> $shutdownscript
@@ -116,12 +124,14 @@ echo 'else:' >> $shutdownscript
 echo '	bus = smbus.SMBus(0)' >> $shutdownscript
 
 echo 'if len(sys.argv)>1:' >> $shutdownscript
-echo "	bus.write_byte(0x1a,0)"  >> $shutdownscript
+echo '	address=0x1a' >> $shutdownscript
+# Fan off
+echo "	bus.write_byte(address,0)"  >> $shutdownscript
 
 # powercut signal
 echo '	if sys.argv[1] == "poweroff" or sys.argv[1] == "halt":'  >> $shutdownscript
 echo "		try:"  >> $shutdownscript
-echo "			bus.write_byte(0x1a,0xFF)"  >> $shutdownscript
+echo "			bus.write_byte(address,0xFF)"  >> $shutdownscript
 echo "		except:"  >> $shutdownscript
 echo "			rev=0"  >> $shutdownscript
 
@@ -143,23 +153,23 @@ echo '	bus = smbus.SMBus(1)' >> $powerbuttonscript
 echo 'else:' >> $powerbuttonscript
 echo '	bus = smbus.SMBus(0)' >> $powerbuttonscript
 
-echo 'GPIO.setwarnings(False)' >> $powerbuttonscript
-echo 'GPIO.setmode(GPIO.BCM)' >> $powerbuttonscript
-echo 'shutdown_pin=4' >> $powerbuttonscript
-echo 'GPIO.setup(shutdown_pin, GPIO.IN,  pull_up_down=GPIO.PUD_DOWN)' >> $powerbuttonscript
+echo 'GPIO.setwarnings(False)' >> $powerbuttonshutdownscript
+echo 'GPIO.setmode(GPIO.BCM)' >> $powerbuttonshutdownscript
+echo 'shutdown_pin=4' >> $powerbuttonshutdownscript
+echo 'GPIO.setup(shutdown_pin, GPIO.IN,  pull_up_down=GPIO.PUD_DOWN)' >> $powerbuttonshutdownscript
 
-echo 'def shutdown_check():' >> $powerbuttonscript
-echo '	while True:' >> $powerbuttonscript
-echo '		pulsetime = 1' >> $powerbuttonscript
-echo '		GPIO.wait_for_edge(shutdown_pin, GPIO.RISING)' >> $powerbuttonscript
-echo '		time.sleep(0.01)' >> $powerbuttonscript
-echo '		while GPIO.input(shutdown_pin) == GPIO.HIGH:' >> $powerbuttonscript
-echo '			time.sleep(0.01)' >> $powerbuttonscript
-echo '			pulsetime += 1' >> $powerbuttonscript
-echo '		if pulsetime >=2 and pulsetime <=3:' >> $powerbuttonscript
-echo '			os.system("reboot")' >> $powerbuttonscript
-echo '		elif pulsetime >=4 and pulsetime <=5:' >> $powerbuttonscript
-echo '			os.system("shutdown now -h")' >> $powerbuttonscript
+echo 'def shutdown_check():' >> $powerbuttonshutdownscript
+echo '	while True:' >> $powerbuttonshutdownscript
+echo '		pulsetime = 1' >> $powerbuttonshutdownscript
+echo '		GPIO.wait_for_edge(shutdown_pin, GPIO.RISING)' >> $powerbuttonshutdownscript
+echo '		time.sleep(0.01)' >> $powerbuttonshutdownscript
+echo '		while GPIO.input(shutdown_pin) == GPIO.HIGH:' >> $powerbuttonshutdownscript
+echo '			time.sleep(0.01)' >> $powerbuttonshutdownscript
+echo '			pulsetime += 1' >> $powerbuttonshutdownscript
+echo '		if pulsetime >=2 and pulsetime <=3:' >> $powerbuttonshutdownscript
+echo '			os.system("reboot")' >> $powerbuttonshutdownscript
+echo '		elif pulsetime >=4 and pulsetime <=5:' >> $powerbuttonshutdownscript
+echo '			os.system("shutdown now -h")' >> $powerbuttonshutdownscript
 
 echo 'def get_fanspeed(tempval, configlist):' >> $powerbuttonscript
 echo '	for curconfig in configlist:' >> $powerbuttonscript
@@ -211,11 +221,12 @@ echo '		return []' >> $powerbuttonscript
 echo '	return newconfig' >> $powerbuttonscript
 
 echo 'def temp_check():' >> $powerbuttonscript
+echo '	address=0x1a' >> $powerbuttonscript
+
 echo '	fanconfig = ["65=100", "60=55", "55=10"]' >> $powerbuttonscript
 echo '	tmpconfig = load_config("'$daemonconfigfile'")' >> $powerbuttonscript
 echo '	if len(tmpconfig) > 0:' >> $powerbuttonscript
 echo '		fanconfig = tmpconfig' >> $powerbuttonscript
-echo '	address=0x1a' >> $powerbuttonscript
 echo '	prevblock=0' >> $powerbuttonscript
 echo '	while True:' >> $powerbuttonscript
 
@@ -241,14 +252,14 @@ echo '			temp=""' >> $powerbuttonscript
 echo '		time.sleep(30)' >> $powerbuttonscript
 
 echo 'try:' >> $powerbuttonscript
-echo '	t1 = Thread(target = shutdown_check)' >> $powerbuttonscript
+echo '	t1 = Thread(target = shutdown_check)' >> $powerbuttonshutdownscript
 echo '	t2 = Thread(target = temp_check)' >> $powerbuttonscript
-echo '	t1.start()' >> $powerbuttonscript
+echo '	t1.start()' >> $powerbuttonshutdownscript
 echo '	t2.start()' >> $powerbuttonscript
 echo 'except:' >> $powerbuttonscript
-echo '	t1.stop()' >> $powerbuttonscript
+echo '	t1.stop()' >> $powerbuttonshutdownscript
 echo '	t2.stop()' >> $powerbuttonscript
-echo '	GPIO.cleanup()' >> $powerbuttonscript
+echo '	GPIO.cleanup()' >> $powerbuttonshutdownscript
 
 sudo chmod 755 $powerbuttonscript
 
@@ -511,7 +522,7 @@ then
 	echo "Terminal=false" >> $shortcutfile
 	echo "Categories=None;" >> $shortcutfile
 	chmod 755 $shortcutfile
-	
+
 	shortcutfile="/home/pi/Desktop/argonone-uninstall.desktop"
 	echo "[Desktop Entry]" > $shortcutfile
 	echo "Name=Argon One Uninstall" >> $shortcutfile
@@ -537,7 +548,7 @@ if [ ! "$CHECKPLATFORM" = "Raspbian" ]
 then
 		echo "You may need to reboot for changes to take effect"
 		echo
-fi 
+fi
 if [ -f $shortcutfile ]; then
 	echo Shortcuts created in your desktop.
 else

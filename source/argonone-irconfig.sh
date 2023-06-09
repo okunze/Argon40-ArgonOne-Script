@@ -1,11 +1,18 @@
 #!/bin/bash
 
-CHECKPLATFORM="Others"
 # Check if Raspbian
-grep -q -F 'Raspbian' /etc/os-release &> /dev/null
-if [ $? -eq 0 ]
+CHECKPLATFORM="Others"
+if [ -f "/etc/os-release" ]
 then
-	CHECKPLATFORM="Raspbian"
+	source /etc/os-release
+	if [ "$ID" = "raspbian" ]
+	then
+		CHECKPLATFORM="Raspbian"
+	elif [ "$ID" = "debian" ]
+	then
+		# For backwards compatibility, continue using raspbian
+		CHECKPLATFORM="Raspbian"
+	fi
 fi
 
 echo "--------------------------------"
@@ -45,7 +52,7 @@ get_number () {
 		then
 			echo "-1"
 			return
-		fi	
+		fi
 		echo $curnumber
 		return
 	fi
@@ -276,7 +283,7 @@ then
 		echo '' | sudo tee -a $irexecshfile 1> /dev/null
 
 		sudo chmod 755 $irexecshfile
-	fi	
+	fi
 fi
 
 if [ ! -f "$irdecodefile" ]
