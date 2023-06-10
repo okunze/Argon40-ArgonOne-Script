@@ -1,4 +1,4 @@
-# Argon ONE (V2) Pi 4 Script
+# Argon ONE (V2) Pi 4 Script    
 
 I have been using the [Argon ONE (V2) Case for Raspberry Pi 4](https://www.argon40.com/collections/raspberry-pi-cases "Argon ONE (V2) Case for Raspberry Pi 4") for a long time and I am very happy with it.
 
