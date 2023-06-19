@@ -15,7 +15,7 @@ jobs:
     steps:
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3.5.3
       - name: Create download folder
         run: mkdir -p ./download
       # https://github.com/marketplace/actions/github-action-for-wget
@@ -43,4 +43,4 @@ jobs:
       - name: Git Auto Commit
         uses: stefanzweifel/git-auto-commit-action@v4.16.0
         with:
-          commit_message: Automated Change by GitHub Actions
+          commit_message: Automated Change by GitHub Action
