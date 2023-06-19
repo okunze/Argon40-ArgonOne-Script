@@ -76,9 +76,16 @@ Always reboot after changing any configuration or uninstallation for the revised
 ## Built With
 
 * [Danny Guo / Make a README](https://www.makeareadme.com/ "Make a README") - The README generator used for README.md
-* [Adam Pritchard / Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet "Markdown Cheatsheet") - The Markdown Cheatsheet used for README.md
 * [PurpleBooth / README-Template.md](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2 "PurpleBooth / README-Template.md") - The template used for README.md
+* [Adam Pritchard / Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet "Markdown Cheatsheet") - The Markdown Cheatsheet used for README.md
+* [Matt Cone / The Markdown Guide](https://www.markdownguide.org/ "The Markdown Guide") - The Markdown Guide used for README.md
 
 ## Acknowledgments
 
 Thanks to [Argon 40](https://www.argon40.com "https://www.argon40.com") for building these great Raspberry Pi Cases.
+
+---
+
+### Alternatives
+
+A fan control daemon written in Rust for Argon One v2 case: [JhnW/ArgonOne-Native-Fan-Controller](https://github.com/JhnW/ArgonOne-Native-Fan-Controller "JhnW/ArgonOne-Native-Fan-Controller")
