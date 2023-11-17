@@ -1,5 +1,14 @@
 #!/bin/bash
 
+if [ -e /boot/firmware/config.txt ] ; then
+  FIRMWARE=/firmware
+else
+  FIRMWARE=
+fi
+CONFIG=/boot${FIRMWARE}/config.txt
+
+CHECKGPIOMODE="libgpiod" # gpiod or rpigpio
+
 # Check if Raspbian
 CHECKPLATFORM="Others"
 if [ -f "/etc/os-release" ]
@@ -130,8 +139,8 @@ then
 	sudo rm $irexecshfile
 	sudo rm $irdecodefile
 
-	sudo cat /boot/config.txt | grep -v 'dtoverlay=gpio-ir,gpio_pin=23' > $irtmpconfigfile
-	cat $irtmpconfigfile | sudo tee /boot/config.txt 1> /dev/null
+	sudo cat $CONFIG | grep -v 'dtoverlay=gpio-ir,gpio_pin=23' > $irtmpconfigfile
+	cat $irtmpconfigfile | sudo tee $CONFIG 1> /dev/null
 	sudo rm $irtmpconfigfile
 
 	echo "Uninstall Completed"
@@ -234,7 +243,7 @@ then
 
 		sudo pip3 install lirc
 
-		echo "dtoverlay=gpio-ir,gpio_pin=23" | sudo tee -a /boot/config.txt 1> /dev/null
+		echo "dtoverlay=gpio-ir,gpio_pin=23" | sudo tee -a $CONFIG 1> /dev/null
 
 		sudo /usr/share/lirc/lirc-old2new
 
@@ -286,9 +295,11 @@ then
 	fi
 fi
 
-if [ ! -f "$irdecodefile" ]
+if [ "$CHECKGPIOMODE" = "rpigpio" ]
 then
 	sudo wget https://download.argon40.com/argonone-irdecoder.py -O $irdecodefile --quiet
+else
+	sudo wget https://download.argon40.com/scripts/argonone-irdecoder-libgpiod.py -O $irdecodefile --quiet
 fi
 
 sudo python3 $irdecodefile $remotemode

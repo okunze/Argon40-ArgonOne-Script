@@ -1,6 +1,89 @@
 #!/bin/bash
 
 
+##########
+# Start code lifted from raspi-config
+# is_pifive, get_serial_hw and do_serial_hw based on raspi-config
+
+if [ -e /boot/firmware/config.txt ] ; then
+  FIRMWARE=/firmware
+else
+  FIRMWARE=
+fi
+CONFIG=/boot${FIRMWARE}/config.txt
+TMPCONFIG=/dev/shm/argontmp.bak
+
+set_config_var() {
+  lua - "$1" "$2" "$3" <<EOF > "$TMPCONFIG"
+local key=assert(arg[1])
+local value=assert(arg[2])
+local fn=assert(arg[3])
+local file=assert(io.open(fn))
+local made_change=false
+for line in file:lines() do
+  if line:match("^#?%s*"..key.."=.*$") then
+    line=key.."="..value
+    made_change=true
+  end
+  print(line)
+end
+
+if not made_change then
+  print(key.."="..value)
+end
+EOF
+sudo chown root:root "$TMPCONFIG"
+sudo chmod 755 "$TMPCONFIG"
+sudo mv "$TMPCONFIG" "$3"
+}
+
+is_pifive() {
+  grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F]4[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo
+  return $?
+}
+
+
+get_serial_hw() {
+  if is_pifive ; then
+    if grep -q -E "dtparam=uart0=off" $CONFIG ; then
+      echo 1
+    elif grep -q -E "dtparam=uart0" $CONFIG ; then
+      echo 0
+    else
+      echo 1
+    fi
+  else
+    if grep -q -E "^enable_uart=1" $CONFIG ; then
+      echo 0
+    elif grep -q -E "^enable_uart=0" $CONFIG ; then
+      echo 1
+    elif [ -e /dev/serial0 ] ; then
+      echo 0
+    else
+      echo 1
+    fi
+  fi
+}
+
+do_serial_hw() {
+  if [ $1 -eq 0 ] ; then
+    if is_pifive ; then
+      set_config_var dtparam=uart0 on $CONFIG
+    else
+      set_config_var enable_uart 1 $CONFIG
+    fi
+  else
+    if is_pifive ; then
+      sudo sed $CONFIG -i -e "/dtparam=uart0.*/d"
+    else
+      set_config_var enable_uart 0 $CONFIG
+    fi
+  fi
+}
+
+# End code lifted from raspi-config
+##########
+
 argon_create_file() {
 	if [ -f $1 ]; then
 		sudo rm $1
@@ -8,6 +91,7 @@ argon_create_file() {
 	sudo touch $1
 	sudo chmod 666 $1
 }
+
 argon_check_pkg() {
 	RESULT=$(dpkg-query -W -f='${Status}\n' "$1" 2> /dev/null | grep "installed")
 
@@ -64,7 +148,15 @@ if [ $? -eq 0 ]
 then
 	# Enable i2c and serial
 	sudo raspi-config nonint do_i2c 0
-	sudo raspi-config nonint do_serial 2
+	if [ "$CHECKPLATFORM" = "Raspbian" ]
+	then
+		# bookworm raspi-config prompts user when configuring serial
+		if [ $(get_serial_hw) -eq 1 ]; then
+			do_serial_hw 0
+		fi
+	else
+		sudo raspi-config nonint do_serial 2
+	fi
 fi
 
 # Helper variables
@@ -125,6 +217,7 @@ echo '	bus = smbus.SMBus(0)' >> $shutdownscript
 
 echo 'if len(sys.argv)>1:' >> $shutdownscript
 echo '	address=0x1a' >> $shutdownscript
+
 # Fan off
 echo "	bus.write_byte(address,0)"  >> $shutdownscript
 
