@@ -134,7 +134,6 @@ then
 	irtmpconfigfile=/dev/shm/argonirconfig.txt
 	sudo systemctl stop irexec.service
 	sudo systemctl disable irexec.service
-	sudo pip3 uninstall lirc -y
 	sudo apt-get -y remove lirc
 	sudo rm $irexecshfile
 	sudo rm $irdecodefile
@@ -240,8 +239,6 @@ then
 		needrestart=1
 		sudo apt-get -y update
 		sudo apt-get -y install lirc
-
-		sudo pip3 install lirc
 
 		echo "dtoverlay=gpio-ir,gpio_pin=23" | sudo tee -a $CONFIG 1> /dev/null
 
