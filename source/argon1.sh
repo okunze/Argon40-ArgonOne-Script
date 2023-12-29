@@ -225,12 +225,22 @@ basename="argonone"
 daemonname=$basename"d"
 irconfigscript=$INSTALLATIONFOLDER/${basename}-ir
 fanconfigscript=$INSTALLATIONFOLDER/${basename}-fanconfig.sh
+eepromrpiscript="/usr/bin/rpi-eeprom-config"
+eepromconfigscript=$INSTALLATIONFOLDER/${basename}-eepromconfig.py
 powerbuttonscript=$INSTALLATIONFOLDER/$daemonname.py
 unitconfigfile=/etc/argonunits.conf
 daemonconfigfile=/etc/$daemonname.conf
 daemonfanservice=/lib/systemd/system/$daemonname.service
 
 daemonhddconfigfile=/etc/${daemonname}-hdd.conf
+
+
+if [ -f "$eepromrpiscript" ]
+then
+	# EEPROM Config Script
+	sudo wget $ARGONDOWNLOADSERVER/scripts/argon-rpi-eeprom-config.py -O $eepromconfigscript --quiet
+	sudo chmod 755 $eepromconfigscript
+fi
 
 # Fan Config Script
 sudo wget $ARGONDOWNLOADSERVER/scripts/argonone-fanconfig.sh -O $fanconfigscript --quiet
@@ -571,6 +581,14 @@ else
 		sudo systemctl restart argoneond.service
 	fi
 fi
+
+
+if [ -f "$eepromrpiscript" ]
+then
+	# EEPROM Config Script
+	sudo $eepromconfigscript
+fi
+
 
 echo "*********************"
 echo "  $setupmode Completed "
