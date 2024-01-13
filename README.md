@@ -50,7 +50,7 @@ Upon installation of the Argon ONE (V2) Pi 4 script by default, the settings of 
 
 CPU TEMP | FAN POWER
 :------: | :-------:
-55 C | 10%
+55 C | 30%
 60 C | 55%
 65 C | 100%
 
