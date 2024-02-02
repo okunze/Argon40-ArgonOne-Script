@@ -110,6 +110,24 @@ do_serial_hw() {
 # End code lifted from raspi-config
 ##########
 
+# Reuse is_pifive, set_config_var
+set_nvme_default() {
+  if is_pifive ; then
+    if ! grep -q -E "dtparam=nvme" $CONFIG ; then
+      echo "dtparam=nvme" | sudo tee -a $CONFIG > /dev/null
+    fi
+    set_config_var dtparam=pciex1_gen=3 on $CONFIG
+  fi
+}
+set_maxusbcurrent() {
+  if is_pifive ; then
+    if ! grep -q -E "max_usb_current=1" $CONFIG ; then
+      echo "max_usb_current=1" | sudo tee -a $CONFIG > /dev/null
+    fi
+  fi
+}
+
+
 argon_check_pkg() {
     RESULT=$(dpkg-query -W -f='${Status}\n' "$1" 2> /dev/null | grep "installed")
 
@@ -220,6 +238,9 @@ then
 	fi
 fi
 
+# Added to enabled NVMe for pi5
+set_nvme_default
+
 # Fan Setup
 basename="argonone"
 daemonname=$basename"d"
@@ -238,7 +259,7 @@ daemonhddconfigfile=/etc/${daemonname}-hdd.conf
 if [ -f "$eepromrpiscript" ]
 then
 	# EEPROM Config Script
-	sudo wget $ARGONDOWNLOADSERVER/scripts/argon-rpi-eeprom-config.py -O $eepromconfigscript --quiet
+	sudo wget $ARGONDOWNLOADSERVER/scripts/argon-rpi-eeprom-config-psu.py -O $eepromconfigscript --quiet
 	sudo chmod 755 $eepromconfigscript
 fi
 
@@ -585,8 +606,11 @@ fi
 
 if [ -f "$eepromrpiscript" ]
 then
+	sudo rpi-eeprom-update
+	sudo apt-get update && upgrade -y
 	# EEPROM Config Script
 	sudo $eepromconfigscript
+	set_maxusbcurrent
 fi
 
 
