@@ -607,7 +607,7 @@ fi
 if [ -f "$eepromrpiscript" ]
 then
 	sudo rpi-eeprom-update
-	sudo apt-get update && upgrade -y
+	sudo apt-get update && sudo apt-get upgrade -y
 	# EEPROM Config Script
 	sudo $eepromconfigscript
 	set_maxusbcurrent
