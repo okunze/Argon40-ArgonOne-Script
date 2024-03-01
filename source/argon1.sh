@@ -4,6 +4,37 @@ echo "*************"
 echo " Argon Setup  "
 echo "*************"
 
+
+# Check time if need to 'fix'
+NEEDSTIMESYNC=0
+LOCALTIME=$(date -u +%s%N | cut -b1-10)
+GLOBALTIME=$(curl -s 'https://worldtimeapi.org/api/ip.txt' | grep unixtime | cut -b11-20)
+TIMEDIFF=$((GLOBALTIME-LOCALTIME))
+echo "Local $LOCALTIME vs Global $GLOBALTIME $TIMEDIFF"
+
+# about 26hrs, max timezone difference
+if [ $TIMEDIFF -gt 100000 ]
+then
+	NEEDSTIMESYNC=1
+fi
+
+
+argon_time_error() {
+	echo "**********************************************"
+	echo "* WARNING: Device time seems to be incorrect *"
+	echo "* This may cause problems during setup.      *"
+	echo "**********************************************"
+	echo "Possible Network Time Protocol Server issue"
+	echo "Try running to correct:"
+    echo " curl https://download.argon40.com/tools/setntpserver.sh | bash"
+}
+
+if [ $NEEDSTIMESYNC -eq 1 ]
+then
+	argon_time_error
+fi
+
+
 # Helper variables
 ARGONDOWNLOADSERVER=https://download.argon40.com
 
@@ -40,27 +71,9 @@ CONFIG=/boot${FIRMWARE}/config.txt
 TMPCONFIG=/dev/shm/argontmp.bak
 
 set_config_var() {
-  lua - "$1" "$2" "$3" <<EOF > "$TMPCONFIG"
-local key=assert(arg[1])
-local value=assert(arg[2])
-local fn=assert(arg[3])
-local file=assert(io.open(fn))
-local made_change=false
-for line in file:lines() do
-  if line:match("^#?%s*"..key.."=.*$") then
-    line=key.."="..value
-    made_change=true
-  end
-  print(line)
-end
-
-if not made_change then
-  print(key.."="..value)
-end
-EOF
-sudo chown root:root "$TMPCONFIG"
-sudo chmod 755 "$TMPCONFIG"
-sudo mv "$TMPCONFIG" "$3"
+    if ! grep -q -E "$1=$2" $3 ; then
+      echo "$1=$2" | sudo tee -a $3 > /dev/null
+    fi
 }
 
 is_pifive() {
@@ -113,17 +126,13 @@ do_serial_hw() {
 # Reuse is_pifive, set_config_var
 set_nvme_default() {
   if is_pifive ; then
-    if ! grep -q -E "dtparam=nvme" $CONFIG ; then
-      echo "dtparam=nvme" | sudo tee -a $CONFIG > /dev/null
-    fi
-    set_config_var dtparam=pciex1_gen=3 on $CONFIG
+    set_config_var dtparam nvme $CONFIG
+    set_config_var dtparam=pciex1_gen 3 $CONFIG
   fi
 }
 set_maxusbcurrent() {
   if is_pifive ; then
-    if ! grep -q -E "max_usb_current=1" $CONFIG ; then
-      echo "max_usb_current=1" | sudo tee -a $CONFIG > /dev/null
-    fi
+    set_config_var max_usb_current 1 $CONFIG
   fi
 }
 
@@ -621,3 +630,11 @@ $versioninfoscript
 echo
 echo "Use '$configcmd' to configure device"
 echo
+
+
+
+if [ $NEEDSTIMESYNC -eq 1 ]
+then
+	argon_time_error
+fi
+
