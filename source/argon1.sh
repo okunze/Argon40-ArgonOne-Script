@@ -8,9 +8,8 @@ echo "*************"
 # Check time if need to 'fix'
 NEEDSTIMESYNC=0
 LOCALTIME=$(date -u +%s%N | cut -b1-10)
-GLOBALTIME=$(curl -s 'https://worldtimeapi.org/api/ip.txt' | grep unixtime | cut -b11-20)
+GLOBALTIME=$(curl -s 'http://worldtimeapi.org/api/ip.txt' | grep unixtime | cut -b11-20)
 TIMEDIFF=$((GLOBALTIME-LOCALTIME))
-echo "Local $LOCALTIME vs Global $GLOBALTIME $TIMEDIFF"
 
 # about 26hrs, max timezone difference
 if [ $TIMEDIFF -gt 100000 ]
