@@ -45,6 +45,7 @@ uninstallscript=$INSTALLATIONFOLDER/argon-uninstall.sh
 shutdownscript=/lib/systemd/system-shutdown/argon-shutdown.sh
 configscript=$INSTALLATIONFOLDER/argon-config
 unitconfigscript=$INSTALLATIONFOLDER/argon-unitconfig.sh
+blstrdacconfigscript=$INSTALLATIONFOLDER/argon-blstrdac.sh
 
 setupmode="Setup"
 
@@ -146,7 +147,7 @@ argon_check_pkg() {
     fi
 }
 
-CHECKDEVICE="one"
+CHECKDEVICE="one"	# Hardcoded for argonone
 # Check if has RTC
 # Todo for multiple OS
 
@@ -235,14 +236,18 @@ if [ $? -eq 0 ]
 then
 	# Enable i2c and serial
 	sudo raspi-config nonint do_i2c 0
-	if [ "$CHECKPLATFORM" = "Raspbian" ]
+	if [ ! "$CHECKDEVICE" = "fanhat" ]
 	then
-		# bookworm raspi-config prompts user when configuring serial
-		if [ $(get_serial_hw) -eq 1 ]; then
-			do_serial_hw 0
+
+		if [ "$CHECKPLATFORM" = "Raspbian" ]
+		then
+			# bookworm raspi-config prompts user when configuring serial
+			if [ $(get_serial_hw) -eq 1 ]; then
+				do_serial_hw 0
+			fi
+		else
+			sudo raspi-config nonint do_serial 2
 		fi
-	else
-		sudo raspi-config nonint do_serial 2
 	fi
 fi
 
@@ -281,9 +286,18 @@ sudo wget $ARGONDOWNLOADSERVER/scripts/argononed.py -O $powerbuttonscript --quie
 sudo wget $ARGONDOWNLOADSERVER/scripts/argononed.service -O $daemonfanservice --quiet
 sudo chmod 644 $daemonfanservice
 
-# IR Files
-sudo wget $ARGONDOWNLOADSERVER/scripts/argonone-irconfig.sh -O $irconfigscript --quiet
-sudo chmod 755 $irconfigscript
+if [ ! "$CHECKDEVICE" = "fanhat" ]
+then
+	# IR Files
+	sudo wget $ARGONDOWNLOADSERVER/scripts/argonone-irconfig.sh -O $irconfigscript --quiet
+	sudo chmod 755 $irconfigscript
+
+	if [ ! "$CHECKDEVICE" = "eon" ]
+	then
+		sudo wget $ARGONDOWNLOADSERVER/scripts/argon-blstrdac.sh -O $blstrdacconfigscript --quiet
+		sudo chmod 755 $blstrdacconfigscript
+	fi
+fi
 
 # Other utility scripts
 sudo wget $ARGONDOWNLOADSERVER/scripts/argon-versioninfo.sh -O $versioninfoscript --quiet
@@ -299,6 +313,7 @@ sudo wget $ARGONDOWNLOADSERVER/scripts/argononed.py -O $powerbuttonscript --quie
 
 sudo wget $ARGONDOWNLOADSERVER/scripts/argon-unitconfig.sh -O $unitconfigscript --quiet
 sudo chmod 755 $unitconfigscript
+
 
 # Generate default Fan config file if non-existent
 if [ ! -f $daemonconfigfile ]; then
@@ -398,8 +413,6 @@ then
 	do
 		sudo wget $ARGONDOWNLOADSERVER/oled/${binfile}.bin -O $INSTALLATIONFOLDER/oled/${binfile}.bin --quiet
 	done
-
-
 fi
 
 
@@ -458,16 +471,25 @@ echo 'do' >> $configscript
 echo '	echo' >> $configscript
 echo '	echo "Choose Option:"' >> $configscript
 echo '	echo "  1. Configure Fan"' >> $configscript
-echo '	echo "  2. Configure IR"' >> $configscript
 
-uninstalloption="4"
+blstrdacoption=0
 
-if [ "$CHECKDEVICE" = "eon" ]
+if [ "$CHECKDEVICE" = "fanhat" ]
 then
-	# ArgonEON Has RTC
-	echo '	echo "  3. Configure RTC and/or Schedule"' >> $configscript
-	echo '	echo "  4. Configure OLED"' >> $configscript
-	uninstalloption="6"
+	uninstalloption="3"
+else
+	echo '	echo "  2. Configure IR"' >> $configscript
+	if [ "$CHECKDEVICE" = "eon" ]
+	then
+		# ArgonEON Has RTC
+		echo '	echo "  3. Configure RTC and/or Schedule"' >> $configscript
+		echo '	echo "  4. Configure OLED"' >> $configscript
+		uninstalloption="6"
+	else
+		uninstalloption="5"
+		blstrdacoption=$(($uninstalloption-2))
+		echo "	echo \"  $blstrdacoption. Configure BLSTR DAC (v3 only)\"" >> $configscript
+	fi
 fi
 
 unitsoption=$(($uninstalloption-1))
@@ -512,21 +534,32 @@ else
 	echo '		mainloopflag=0' >> $configscript
 fi
 
-echo '	elif [ $newmode -eq 2 ]' >> $configscript
-echo '	then' >> $configscript
-echo "		$irconfigscript" >> $configscript
-echo '		mainloopflag=0' >> $configscript
-
-if [ "$CHECKDEVICE" = "eon" ]
+if [ ! "$CHECKDEVICE" = "fanhat" ]
 then
-	echo '	elif [ $newmode -eq 3 ]' >> $configscript
+	echo '	elif [ $newmode -eq 2 ]' >> $configscript
 	echo '	then' >> $configscript
-	echo "		$rtcconfigscript" >> $configscript
+	echo "		$irconfigscript" >> $configscript
 	echo '		mainloopflag=0' >> $configscript
-	echo '	elif [ $newmode -eq 4 ]' >> $configscript
-	echo '	then' >> $configscript
-	echo "		$oledconfigscript" >> $configscript
-	echo '		mainloopflag=0' >> $configscript
+
+	if [ "$CHECKDEVICE" = "eon" ]
+	then
+		echo '	elif [ $newmode -eq 3 ]' >> $configscript
+		echo '	then' >> $configscript
+		echo "		$rtcconfigscript" >> $configscript
+		echo '		mainloopflag=0' >> $configscript
+		echo '	elif [ $newmode -eq 4 ]' >> $configscript
+		echo '	then' >> $configscript
+		echo "		$oledconfigscript" >> $configscript
+		echo '		mainloopflag=0' >> $configscript
+	fi
+
+	if [ $blstrdacoption -gt 0 ]
+	then
+		echo "	elif [ \$newmode -eq $blstrdacoption ]" >> $configscript
+		echo '	then' >> $configscript
+		echo "		$blstrdacconfigscript" >> $configscript
+		echo '		mainloopflag=0' >> $configscript
+	fi
 fi
 
 echo "	elif [ \$newmode -eq $unitsoption ]" >> $configscript
@@ -590,8 +623,11 @@ then
 		sudo ln -s $configscript /usr/bin/argonone-config
 		sudo ln -s $uninstallscript /usr/bin/argonone-uninstall
 		sudo ln -s $irconfigscript /usr/bin/argonone-ir
+	elif [ "$CHECKDEVICE" = "fanhat" ]
+	then
+		sudo ln -s $configscript /usr/bin/argonone-config
+		sudo ln -s $uninstallscript /usr/bin/argonone-uninstall
 	fi
-
 
 	# Enable and Start Service(s)
 	sudo systemctl daemon-reload
