@@ -647,15 +647,20 @@ else
 	fi
 fi
 
-
-if [ -f "$eepromrpiscript" ]
+if [ "$CHECKPLATFORM" = "Raspbian" ]
 then
-	sudo rpi-eeprom-update
-	sudo apt-get update && sudo apt-get upgrade -y
-	# EEPROM Config Script
-	sudo $eepromconfigscript
-	set_maxusbcurrent
+	if [ -f "$eepromrpiscript" ]
+	then
+		sudo apt-get update && sudo apt-get upgrade -y
+		sudo rpi-eeprom-update
+		# EEPROM Config Script
+		sudo $eepromconfigscript
+	fi
+else
+	echo "WARNING: EEPROM not updated.  Please run this under Raspberry Pi OS"
 fi
+
+set_maxusbcurrent
 
 
 echo "*********************"
