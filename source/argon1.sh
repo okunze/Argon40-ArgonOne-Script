@@ -24,8 +24,8 @@ argon_time_error() {
 	echo "* This may cause problems during setup.      *"
 	echo "**********************************************"
 	echo "Possible Network Time Protocol Server issue"
-	echo "Try running to correct:"
-    echo " curl https://download.argon40.com/tools/setntpserver.sh | bash"
+	echo "Try running the following to correct:"
+    echo " curl -k https://download.argon40.com/tools/setntpserver.sh | bash"
 }
 
 if [ $NEEDSTIMESYNC -eq 1 ]
@@ -46,6 +46,7 @@ shutdownscript=/lib/systemd/system-shutdown/argon-shutdown.sh
 configscript=$INSTALLATIONFOLDER/argon-config
 unitconfigscript=$INSTALLATIONFOLDER/argon-unitconfig.sh
 blstrdacconfigscript=$INSTALLATIONFOLDER/argon-blstrdac.sh
+statusdisplayscript=$INSTALLATIONFOLDER/argon-status.sh
 
 setupmode="Setup"
 
@@ -300,6 +301,11 @@ then
 fi
 
 # Other utility scripts
+sudo wget $ARGONDOWNLOADSERVER/scripts/argonstatus.py -O $INSTALLATIONFOLDER/argonstatus.py --quiet
+sudo wget $ARGONDOWNLOADSERVER/scripts/argon-status.sh -O $statusdisplayscript --quiet
+sudo chmod 755 $statusdisplayscript
+
+
 sudo wget $ARGONDOWNLOADSERVER/scripts/argon-versioninfo.sh -O $versioninfoscript --quiet
 sudo chmod 755 $versioninfoscript
 
@@ -476,7 +482,7 @@ blstrdacoption=0
 
 if [ "$CHECKDEVICE" = "fanhat" ]
 then
-	uninstalloption="3"
+	uninstalloption="4"
 else
 	echo '	echo "  2. Configure IR"' >> $configscript
 	if [ "$CHECKDEVICE" = "eon" ]
@@ -484,16 +490,18 @@ else
 		# ArgonEON Has RTC
 		echo '	echo "  3. Configure RTC and/or Schedule"' >> $configscript
 		echo '	echo "  4. Configure OLED"' >> $configscript
-		uninstalloption="6"
+		uninstalloption="7"
 	else
-		uninstalloption="5"
-		blstrdacoption=$(($uninstalloption-2))
+		uninstalloption="6"
+		blstrdacoption=$(($uninstalloption-3))
 		echo "	echo \"  $blstrdacoption. Configure BLSTR DAC (v3 only)\"" >> $configscript
 	fi
 fi
 
-unitsoption=$(($uninstalloption-1))
+unitsoption=$(($uninstalloption-2))
 echo "	echo \"  $unitsoption. Configure Units\"" >> $configscript
+statusoption=$(($uninstalloption-1))
+echo "	echo \"  $statusoption. System Information\"" >> $configscript
 
 echo "	echo \"  $uninstalloption. Uninstall\"" >> $configscript
 echo '	echo ""' >> $configscript
@@ -566,6 +574,10 @@ echo "	elif [ \$newmode -eq $unitsoption ]" >> $configscript
 echo '	then' >> $configscript
 echo "		$unitconfigscript" >> $configscript
 echo '		mainloopflag=0' >> $configscript
+
+echo "	elif [ \$newmode -eq $statusoption ]" >> $configscript
+echo '	then' >> $configscript
+echo "		$statusdisplayscript" >> $configscript
 
 echo "	elif [ \$newmode -eq $uninstalloption ]" >> $configscript
 echo '	then' >> $configscript
