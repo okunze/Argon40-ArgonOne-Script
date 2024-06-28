@@ -39,6 +39,8 @@ ARGONDOWNLOADSERVER=https://download.argon40.com
 
 INSTALLATIONFOLDER=/etc/argon
 
+FLAGFILEV1=$INSTALLATIONFOLDER/flag_v1
+
 versioninfoscript=$INSTALLATIONFOLDER/argon-versioninfo.sh
 
 uninstallscript=$INSTALLATIONFOLDER/argon-uninstall.sh
@@ -147,6 +149,7 @@ argon_check_pkg() {
         echo "OK"
     fi
 }
+
 
 CHECKDEVICE="one"	# Hardcoded for argonone
 # Check if has RTC
@@ -311,7 +314,12 @@ sudo chmod 755 $versioninfoscript
 
 sudo wget $ARGONDOWNLOADSERVER/scripts/argonsysinfo.py -O $INSTALLATIONFOLDER/argonsysinfo.py --quiet
 
-sudo wget $ARGONDOWNLOADSERVER/scripts/argonregister.py -O $INSTALLATIONFOLDER/argonregister.py --quiet
+if [ -f "$FLAGFILEV1" ]
+then
+	sudo wget $ARGONDOWNLOADSERVER/scripts/argonregister-v1.py -O $INSTALLATIONFOLDER/argonregister.py --quiet
+else
+	sudo wget $ARGONDOWNLOADSERVER/scripts/argonregister.py -O $INSTALLATIONFOLDER/argonregister.py --quiet
+fi
 
 sudo wget "$ARGONDOWNLOADSERVER/scripts/argonpowerbutton-${CHECKGPIOMODE}.py" -O $INSTALLATIONFOLDER/argonpowerbutton.py --quiet
 
