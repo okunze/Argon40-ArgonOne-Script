@@ -334,6 +334,7 @@ fi
 
 # Other utility scripts
 sudo wget $ARGONDOWNLOADSERVER/scripts/argonstatus.py -O $INSTALLATIONFOLDER/argonstatus.py --quiet
+sudo wget $ARGONDOWNLOADSERVER/scripts/argondashboard.py -O $INSTALLATIONFOLDER/argondashboard.py --quiet
 sudo wget $ARGONDOWNLOADSERVER/scripts/argon-status.sh -O $statusdisplayscript --quiet
 sudo chmod 755 $statusdisplayscript
 
@@ -451,7 +452,7 @@ then
 		then
 			echo 'screenlist="clock cpu storage raid ram temp ip"' >> $oledconfigfile
 		else
-			echo 'screenlist="clock cpu storage ram temp ip"' >> $oledconfigfile
+			echo 'screenlist="logo1v5 clock cpu storage ram temp ip"' >> $oledconfigfile
 		fi
 	fi
 
@@ -475,6 +476,14 @@ then
 	do
 		sudo wget $ARGONDOWNLOADSERVER/oled/${binfile}.bin -O $INSTALLATIONFOLDER/oled/${binfile}.bin --quiet
 	done
+
+	if [ "$CHECKDEVICE" = "oneoled" ]
+	then
+		for binfile in logo1v5
+		do
+			sudo wget $ARGONDOWNLOADSERVER/oled/${binfile}.bin -O $INSTALLATIONFOLDER/oled/${binfile}.bin --quiet
+		done
+	fi
 fi
 
 
