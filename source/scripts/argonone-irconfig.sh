@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 if [ -e /boot/firmware/config.txt ] ; then
   FIRMWARE=/firmware
 else
@@ -24,9 +25,10 @@ then
 	fi
 fi
 
-echo "--------------------------------"
-echo "Argon One IR Configuration Tool"
-echo "--------------------------------"
+
+echo "-----------------------------"
+echo " Argon IR Configuration Tool"
+echo "------------------------------"
 echo "WARNING: This only supports NEC"
 echo "         protocol only."
 echo -n "Press Y to continue:"
@@ -70,8 +72,8 @@ get_number () {
 }
 
 irexecrcfile=/etc/lirc/irexec.lircrc
-irexecshfile=/usr/bin/argonirexec
-irdecodefile=/usr/bin/argonirdecoder
+irexecshfile=/etc/argon/argonirexec
+irdecodefile=/etc/argon/argonirdecoder
 kodiuserdatafolder="$HOME/.kodi/userdata"
 kodilircmapfile="$kodiuserdatafolder/Lircmap.xml"
 remotemode=""
@@ -176,9 +178,9 @@ then
 	fi
 elif [ $newmode -eq 2 ]
 then
-	echo "--------------------------------"
-	echo "Argon One IR Configuration Tool"
-	echo "--------------------------------"
+	echo "-----------------------------"
+	echo " Argon IR Configuration Tool"
+	echo "-----------------------------"
 	echo "WARNING: This will install LIRC"
 	echo "         and related libraries."
 	echo -n "Press Y to agree:"
@@ -320,7 +322,10 @@ then
 	echo '        <down>KEY_DOWN</down>' | tee -a $kodilircmapfile 1> /dev/null
 	echo '        <select>KEY_OK</select>' | tee -a $kodilircmapfile 1> /dev/null
 	echo '        <start>KEY_HOME</start>' | tee -a $kodilircmapfile 1> /dev/null
-	echo '        <rootmenu>KEY_MENUBACK</rootmenu>' | tee -a $kodilircmapfile 1> /dev/null
+	# 20240611: User reported mapping is incorrect
+	#echo '        <rootmenu>KEY_MENUBACK</rootmenu>' | tee -a $kodilircmapfile 1> /dev/null
+	echo '        <rootmenu>KEY_MENU</rootmenu>' | tee -a $kodilircmapfile 1> /dev/null
+	echo '        <back>KEY_BACK</back>' | tee -a $kodilircmapfile 1> /dev/null
 	echo '        <volumeplus>KEY_VOLUMEUP</volumeplus>' | tee -a $kodilircmapfile 1> /dev/null
 	echo '        <volumeminus>KEY_VOLUMEDOWN</volumeminus>' | tee -a $kodilircmapfile 1> /dev/null
 	echo '    </remote>' | tee -a $kodilircmapfile 1> /dev/null

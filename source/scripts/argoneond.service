@@ -1,0 +1,10 @@
+[Unit]
+Description=Argon EON RTC Service
+After=multi-user.target
+[Service]
+Type=simple
+Restart=always
+RemainAfterExit=true
+ExecStart=/usr/bin/python3 /etc/argon/argoneond.py SERVICE
+[Install]
+WantedBy=multi-user.target

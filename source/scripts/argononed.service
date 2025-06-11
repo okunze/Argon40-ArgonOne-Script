@@ -1,0 +1,10 @@
+[Unit]
+Description=Argon One Fan and Button Service
+After=multi-user.target
+[Service]
+Type=simple
+Restart=always
+RemainAfterExit=true
+ExecStart=/usr/bin/python3 /etc/argon/argononed.py SERVICE
+[Install]
+WantedBy=multi-user.target
