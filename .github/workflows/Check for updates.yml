@@ -193,11 +193,11 @@ jobs:
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/oled/bgtime.bin -P ./download/oled
-      - name: Github Action for wget (oneoled.bin)
+      - name: Github Action for wget (logo1v5.bin)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/oneoled.bin -P ./download/oled
-      - name: Github Action for wget (argon-uninstall.sh
+          args: https://download.argon40.com/oled/logo1v5.bin -P ./download/oled
+      - name: Github Action for wget (argon-uninstall.sh)
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argon-uninstall.sh -P ./download/scripts
