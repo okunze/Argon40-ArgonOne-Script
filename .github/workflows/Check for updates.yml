@@ -89,7 +89,7 @@ jobs:
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argonregister-v1.py -P ./download/scripts
-      - name: Github Action for wget (/argonregister.py)
+      - name: Github Action for wget (argonregister.py)
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argonregister.py -P ./download/scripts
@@ -101,10 +101,6 @@ jobs:
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argonpowerbutton-rpigpio.py -P ./download/scripts
-      - name: Github Action for wget (argononed.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argononed.py -P ./download/scripts
       - name: Github Action for wget (argon-unitconfig.sh)
         uses: wei/wget@v1.1.1
         with:
