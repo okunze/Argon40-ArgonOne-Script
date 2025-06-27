@@ -41,7 +41,10 @@ if [ -f "$shortcutfile" ]; then
 		sudo rm /usr/share/pixmaps/argoneon.png
 	fi
 fi
-
+shortcutfile="/home/$destfoldername/Desktop/argononeup.desktop"
+if [ -f "$shortcutfile" ]; then
+	sudo rm $shortcutfile
+fi
 
 INSTALLATIONFOLDER=/etc/argon
 
@@ -56,6 +59,15 @@ if [ -f $argononefanscript ]; then
 
 	# Remove files
 	sudo rm /lib/systemd/system/argononed.service
+fi
+
+argononeupscript=$INSTALLATIONFOLDER/argononeupd.py
+if [ -f $argononeupscript ]; then
+	sudo systemctl stop argononeupd.service
+	sudo systemctl disable argononeupd.service
+
+	# Remove files
+	sudo rm /lib/systemd/system/argononeupd.service
 fi
 
 # Remove RTC if any
@@ -78,7 +90,7 @@ fi
 argononeupsscript=$INSTALLATIONFOLDER/argononeupsd.py
 if [ -f "$argononeupsscript" ]
 then
-	sudo rmmod argonbatteryicon
+	#sudo rmmod argonbatteryicon
 	# Disable Services
 	sudo systemctl stop argononeupsd.service
 	sudo systemctl disable argononeupsd.service
@@ -98,18 +110,21 @@ then
 	done
 fi
 
-sudo rm /usr/bin/argon-config
+if [ -f "/usr/bin/argon-config" ]
+then
+	sudo rm /usr/bin/argon-config
+fi
 
 if [ -f "/usr/bin/argonone-config" ]
 then
-		sudo rm /usr/bin/argonone-config
-		sudo rm /usr/bin/argonone-uninstall
+	sudo rm /usr/bin/argonone-config
+	sudo rm /usr/bin/argonone-uninstall
 fi
 
 
 if [ -f "/usr/bin/argonone-ir" ]
 then
-		sudo rm /usr/bin/argonone-ir
+	sudo rm /usr/bin/argonone-ir
 fi
 
 # Delete config files

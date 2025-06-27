@@ -7,7 +7,10 @@ argonirconfigscript=/etc/argon/argonone-ir
 
 if [ ! -z "$1" ]
 then
-	$pythonbin $argononefanscript FANOFF
+	if [ -f "$argononefanscript" ]
+	then
+		$pythonbin $argononefanscript FANOFF
+	fi
 	if [ "$1" = "poweroff" ] || [ "$1" = "halt" ]
 	then
 		if [ -f $argonirconfigscript ]
