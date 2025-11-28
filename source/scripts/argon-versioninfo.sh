@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSIONINFO="2507001"
+VERSIONINFO="2511001"
 
 echo "Version $VERSIONINFO"
 if [ -z "$1" ]

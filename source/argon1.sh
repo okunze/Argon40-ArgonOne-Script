@@ -228,6 +228,8 @@ else
 	fi
 fi
 
+echo "Installing/updating dependencies..."
+
 for curpkg in ${pkglist[@]}; do
 	sudo apt-get install -y $curpkg
 	RESULT=$(argon_check_pkg "$curpkg")
@@ -239,6 +241,8 @@ for curpkg in ${pkglist[@]}; do
 		exit
 	fi
 done
+
+echo "Updating configuration ..."
 
 # Ubuntu Mate for RPi has raspi-config too
 command -v raspi-config &> /dev/null
@@ -271,8 +275,9 @@ then
 	rm $TMPCONFIGFILE
 fi
 
-# Added to enabled NVMe for pi5
+# Additional config for pi5
 set_nvme_default
+set_maxusbcurrent
 
 # Fan Setup
 basename="argonone"
@@ -289,6 +294,7 @@ daemonfanservice=/lib/systemd/system/$daemonname.service
 
 daemonhddconfigfile=/etc/${daemonname}-hdd.conf
 
+echo "Installing/Updating scripts and services ..."
 
 if [ -f "$eepromrpiscript" ]
 then
@@ -303,6 +309,13 @@ then
 	sudo wget $ARGONDOWNLOADSERVER/scripts/argonone-upsconfig.sh -O $upsconfigscript --quiet
 	sudo chmod 755 $upsconfigscript
 fi
+
+for TMPDIRECTORY in "/lib/systemd/system" "/lib/systemd/system-shutdown"
+do
+	sudo mkdir -p "$TMPDIRECTORY"
+	sudo chmod 755 $TMPDIRECTORY
+	sudo chown root:root "$TMPDIRECTORY"
+done
 
 # Fan Config Script
 sudo wget $ARGONDOWNLOADSERVER/scripts/argonone-fanconfig.sh -O $fanconfigscript --quiet
@@ -705,6 +718,8 @@ fi
 shortcutfile="/home/$destfoldername/Desktop/argonone-config.desktop"
 if [ -d "/home/$destfoldername/Desktop" ]
 then
+	echo "Creating/Updating Desktop Elements ..."
+
 	terminalcmd="lxterminal --working-directory=/home/$destfoldername/ -t"
 	if  [ -f "/home/$destfoldername/.twisteros.twid" ]
 	then
@@ -734,6 +749,8 @@ then
 fi
 
 configcmd="$(basename -- $configscript)"
+
+echo "Initializing Services ..."
 
 if [ "$setupmode" = "Setup" ]
 then
@@ -772,10 +789,12 @@ else
 	fi
 fi
 
+
 if [ "$CHECKPLATFORM" = "Raspbian" ]
 then
 	if [ -f "$eepromrpiscript" ]
 	then
+		echo "Checking EEPROM ..."
 		sudo apt-get update && sudo apt-get upgrade -y
 		sudo rpi-eeprom-update
 		# EEPROM Config Script
@@ -784,8 +803,6 @@ then
 else
 	echo "WARNING: EEPROM not updated.  Please run this under Raspberry Pi OS"
 fi
-
-set_maxusbcurrent
 
 
 echo "*********************"

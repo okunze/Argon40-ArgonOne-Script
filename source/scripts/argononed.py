@@ -42,6 +42,8 @@ if os.path.exists("/etc/argon/argoneonoled.py"):
 OLED_CONFIGFILE = "/etc/argoneonoled.conf"
 UNIT_CONFIGFILE = "/etc/argonunits.conf"
 
+SHUTDOWN_FLAGFILE = "/dev/shm/argonshutdownflag.txt"
+
 # This function converts the corresponding fanspeed for the given temperature
 # The configuration data is a list of strings in the form "<temperature>=<speed>"
 
@@ -257,6 +259,13 @@ def display_loop(readq):
 			screenenabled = []
 
 	while len(screenenabled) > 0:
+		try:
+			if os.path.isfile(SHUTDOWN_FLAGFILE):
+				display_defaultimg()
+				return
+		except:
+			pass
+
 		if len(curlist) == 0 and screenjogflag == 1:
 			# Reset Screen Saver
 			screensavermode = False
@@ -565,8 +574,17 @@ def display_defaultimg():
 if len(sys.argv) > 1:
 	cmd = sys.argv[1].upper()
 	if cmd == "SHUTDOWN":
+		try:
+			with open(SHUTDOWN_FLAGFILE, "w") as f:
+				f.write("signalled")
+		except:
+			pass
+
 		# Signal poweroff
 		argonregister_signalpoweroff(bus)
+
+		if OLED_ENABLED == True:
+			display_defaultimg()
 
 	elif cmd == "FANOFF":
 		# Turn off fan

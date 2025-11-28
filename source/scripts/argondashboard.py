@@ -368,4 +368,7 @@ def mainloop(stdscr):
 	except Exception as closeerr:
 		pass
 
-curses.wrapper(mainloop)
+try:
+	curses.wrapper(mainloop)
+except Exception as wrapperr:
+	pass

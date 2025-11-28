@@ -98,9 +98,13 @@ then
 	sudo systemctl stop argonupsrtcd.service
 	sudo systemctl disable argonupsrtcd.service
 
+	sudo systemctl --global stop argononeupsduser.service
+	sudo systemctl --global disable argononeupsduser.service
+
 	# Remove files
 	sudo rm /lib/systemd/system/argononeupsd.service
 	sudo rm /lib/systemd/system/argonupsrtcd.service
+	sudo rm /etc/systemd/user/argononeupsduser.service
 
 	find "/home" -maxdepth 1 -type  d | while read line; do
 		shortcutfile="$line/Desktop/argonone-ups.desktop"
@@ -128,7 +132,7 @@ then
 fi
 
 # Delete config files
-for configfile in argonunits argononed argononed-hdd argoneonrtc argoneonoled argonupsrtc
+for configfile in argonunits argononed argononed-hdd argoneonrtc argoneonoled argonupsrtc argononeupd
 do
 	if [ -f "/etc/${configfile}.conf" ]
 	then
