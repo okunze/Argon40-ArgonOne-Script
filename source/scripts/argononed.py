@@ -536,11 +536,12 @@ def display_loop(readq):
 					# Reset Screen Saver
 					screensavermode = False
 					screensaverctr = 0
-
+					readq.task_done()
 					break
 				elif qdata == "OLEDSTOP":
 					# End OLED Thread
 					display_defaultimg()
+					readq.task_done()
 					return
 				else:
 					screensaverctr = screensaverctr + 1
