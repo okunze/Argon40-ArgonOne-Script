@@ -17,6 +17,79 @@ def argonpowerbutton_debuglog(typestr, logstr):
 	except:
 		pass
 
+def argonpowerbutton_getvalue(lineobj,lineid):
+	if lineid is not None:
+		tmpval = lineobj.get_value(lineid) != gpiod.line.Value.INACTIVE
+		if tmpval == False:
+			return 0
+		return 1
+	return lineobj.get_value()
+
+def argonpowerbutton_watchline(debugname, dataq, lineid, callback):
+	monitormode = True
+	argonpowerbutton_debuglog(debugname, "Starting")
+	# Pi5 mapping, 0 for older
+	chippath = '/dev/gpiochip4'
+	try:
+		chip = gpiod.Chip(chippath)
+	except Exception as gpioerr:
+		try:
+			# Old mapping
+			chippath = '/dev/gpiochip0'
+			chip = gpiod.Chip(chippath)
+		except Exception as gpioolderr:
+			chippath = ""
+
+	if len(chippath) == 0:
+		argonpowerbutton_debuglog(debugname+"-error", "Unable to initialize GPIO")
+		try:
+			dataq.put("ERROR")
+		except:
+			pass
+		return
+
+	# Monitoring starts
+	try:
+		try:
+			# Reference https://github.com/brgl/libgpiod/blob/master/bindings/python/examples/gpiomon.py
+
+			lineobj = chip.get_line(lineid)
+			if lineid == 27:
+				lineobj.request(consumer="argon", type=gpiod.LINE_REQ_EV_BOTH_EDGES, flags=gpiod.LINE_REQ_FLAG_BIAS_PULL_UP)
+			else:
+				lineobj.request(consumer="argon", type=gpiod.LINE_REQ_EV_BOTH_EDGES)
+			while monitormode == True:
+				hasevent = lineobj.event_wait(10)
+				if hasevent:
+					eventdata = lineobj.event_read()
+					monitormode = callback(eventdata.type == gpiod.LineEvent.RISING_EDGE, lineobj, dataq, None)
+
+			lineobj.release()
+			chip.close()
+		except Exception:
+			# https://github.com/brgl/libgpiod/blob/master/bindings/python/examples/watch_line_rising.py
+			configobj = {lineid: gpiod.LineSettings(direction=gpiod.line.Direction.INPUT, edge_detection=gpiod.line.Edge.BOTH)}
+			if lineid == 27:
+				configobj = {lineid: gpiod.LineSettings(direction=gpiod.line.Direction.INPUT, edge_detection=gpiod.line.Edge.BOTH, bias=gpiod.line.Bias.PULL_UP )}
+
+			with gpiod.request_lines(
+					chippath,
+					consumer="argon",
+					config=configobj,
+				) as request:
+					while monitormode:
+						# Blocks until at least one event is available
+						for event in request.read_edge_events():
+							monitormode = callback(event.event_type == event.Type.RISING_EDGE, request, dataq, event.line_offset)
+	except Exception as monitorerror:
+		try:
+			argonpowerbutton_debuglog(debugname+"-error", str(monitorerror))
+		except:
+			argonpowerbutton_debuglog(debugname+"-error", "Error aborting")
+	try:
+		dataq.put("ERROR")
+	except:
+		pass
 
 # This function is the thread that monitors activity in our shutdown pin
 # The pulse width is measured, and the corresponding shell command will be issued
@@ -58,131 +131,76 @@ def argonpowerbutton_getconfigval(keyname, datatype="int"):
 		return -1
 	return ""
 
-def argonpowerbutton_monitorlid(writeq):
-	try:
-		argonpowerbutton_debuglog("lid-monitor", "Starting")
-		monitormode = True
+def argonpowerbutton_monitorlidevent(isrising, lineobj, writeq, lineid):
+	if isrising == False:
+		targetsecs = argonpowerbutton_getconfigval("lidshutdownsecs")
+		if targetsecs > 0:
+			argonpowerbutton_debuglog("lid-monitor", "Close Detect; Wait for :"+str(targetsecs))
+		else:
+			argonpowerbutton_debuglog("lid-monitor", "Close Detected; Do nothing")
+		# Time pulse data
+		time.sleep(1)
+		pulsetimesec = 1
 		# 0 - Lid is closed, 1 - Lid is open
-		# Pin Assignments
-		LINE_LIDMONITOR=27
-		try:
-			# Pi5 mapping
-			chip = gpiod.Chip('4')
-		except Exception as gpioerr:
-			# Old mapping
-			chip = gpiod.Chip('0')
+		while argonpowerbutton_getvalue(lineobj, lineid) == 0:
+			if targetsecs > 0:
+				if pulsetimesec >= targetsecs:
+					argonpowerbutton_debuglog("lid-monitor", "Target Reached, shutting down")
+					monitormode = False
+					os.system("shutdown now -h")
+					return False
 
-		lineobj = chip.get_line(LINE_LIDMONITOR)
-		lineobj.request(consumer="argon", type=gpiod.LINE_REQ_EV_BOTH_EDGES, flags=gpiod.LINE_REQ_FLAG_BIAS_PULL_UP)
-		while monitormode == True:
-			hasevent = lineobj.event_wait(10)
-			if hasevent:
-				eventdata = lineobj.event_read()
-				if eventdata.type == gpiod.LineEvent.FALLING_EDGE:
-					targetsecs = argonpowerbutton_getconfigval("lidshutdownsecs")
-					if targetsecs > 0:
-						argonpowerbutton_debuglog("lid-monitor", "Close Detect; Wait for :"+str(targetsecs))
-					else:
-						argonpowerbutton_debuglog("lid-monitor", "Close Detected; Do nothing")
-					# Time pulse data
-					time.sleep(1)
-					pulsetimesec = 1
-					while lineobj.get_value() == 0:
-						if targetsecs > 0:
-							if pulsetimesec >= targetsecs:
-								argonpowerbutton_debuglog("lid-monitor", "Target Reached, shutting down")
-								monitormode = False
-								os.system("shutdown now -h")
-								break
+			time.sleep(1)
+			pulsetimesec += 1
+		argonpowerbutton_debuglog("lid-monitor", "Open Detected")
+	return True
 
-						time.sleep(1)
-						pulsetimesec += 1
-					argonpowerbutton_debuglog("lid-monitor", "Open Detected")
+def argonpowerbutton_monitorlid(writeq):
+	LINE_LIDMONITOR=27
+	argonpowerbutton_watchline("lid-monitor", writeq, LINE_LIDMONITOR, argonpowerbutton_monitorlidevent)
 
-		lineobj.release()
-		chip.close()
-	except Exception as liderror:
-		try:
-			argonpowerbutton_debuglog("lid-monitor-error", str(liderror))
-		except:
-			argonpowerbutton_debuglog("lid-monitor-error", "Error aborting")
-		#pass
+def argonpowerbutton_monitorevent(isrising, lineobj, writeq, lineid):
+	pulsetime = 0
+	if isrising == True:
+		# Time pulse data
+		while argonpowerbutton_getvalue(lineobj, lineid) == 1:
+			time.sleep(0.01)
+			pulsetime += 1
+
+		if pulsetime >=2 and pulsetime <=3:
+			# Testing
+			#writeq.put("OLEDSWITCH")
+			writeq.put("OLEDSTOP")
+			os.system("reboot")
+			return False
+		elif pulsetime >=4 and pulsetime <=5:
+			writeq.put("OLEDSTOP")
+			os.system("shutdown now -h")
+			return False
+		elif pulsetime >=6 and pulsetime <=7:
+			writeq.put("OLEDSWITCH")
+	return True
 
 def argonpowerbutton_monitor(writeq):
+	LINE_SHUTDOWN=4
+	argonpowerbutton_watchline("button", writeq, LINE_SHUTDOWN, argonpowerbutton_monitorevent)
 
-	try:
-		# Reference https://github.com/brgl/libgpiod/blob/master/bindings/python/examples/gpiomon.py
 
-		# Pin Assignments
-		LINE_SHUTDOWN=4
-		try:
-			# Pi5 mapping
-			chip = gpiod.Chip('4')
-		except Exception as gpioerr:
-			# Old mapping
-			chip = gpiod.Chip('0')
+def argonpowerbutton_monitorswitchevent(isrising, lineobj, writeq, lineid):
+	pulsetime = 0
+	if isrising == True:
+		# Time pulse data
+		while argonpowerbutton_getvalue(lineobj, lineid) == 1:
+			time.sleep(0.01)
+			pulsetime += 1
 
-		lineobj = chip.get_line(LINE_SHUTDOWN)
-		lineobj.request(consumer="argon", type=gpiod.LINE_REQ_EV_BOTH_EDGES)
-		while True:
-			hasevent = lineobj.event_wait(10)
-			if hasevent:
-				pulsetime = 0
-				eventdata = lineobj.event_read()
-				if eventdata.type == gpiod.LineEvent.RISING_EDGE:
-					# Time pulse data
-					while lineobj.get_value() == 1:
-						time.sleep(0.01)
-						pulsetime += 1
-
-					if pulsetime >=2 and pulsetime <=3:
-						# Testing
-						#writeq.put("OLEDSWITCH")
-						writeq.put("OLEDSTOP")
-						os.system("reboot")
-						break
-					elif pulsetime >=4 and pulsetime <=5:
-						writeq.put("OLEDSTOP")
-						os.system("shutdown now -h")
-						break
-					elif pulsetime >=6 and pulsetime <=7:
-						writeq.put("OLEDSWITCH")
-		lineobj.release()
-		chip.close()
-	except Exception:
-		writeq.put("ERROR")
-
+		if pulsetime >= 10:
+			writeq.put("OLEDSWITCH")
+	return True
 
 def argonpowerbutton_monitorswitch(writeq):
+	LINE_SHUTDOWN=4
+	argonpowerbutton_watchline("button-switch", writeq, LINE_SHUTDOWN, argonpowerbutton_monitorswitchevent)
 
-	try:
-		# Reference https://github.com/brgl/libgpiod/blob/master/bindings/python/examples/gpiomon.py
-
-		# Pin Assignments
-		LINE_SHUTDOWN=4
-		try:
-			# Pi5 mapping
-			chip = gpiod.Chip('4')
-		except Exception as gpioerr:
-			# Old mapping
-			chip = gpiod.Chip('0')
-
-		lineobj = chip.get_line(LINE_SHUTDOWN)
-		lineobj.request(consumer="argon", type=gpiod.LINE_REQ_EV_BOTH_EDGES)
-		while True:
-			hasevent = lineobj.event_wait(10)
-			if hasevent:
-				pulsetime = 0
-				eventdata = lineobj.event_read()
-				if eventdata.type == gpiod.LineEvent.RISING_EDGE:
-					# Time pulse data
-					while lineobj.get_value() == 1:
-						time.sleep(0.01)
-						pulsetime += 1
-
-					if pulsetime >= 10:
-						writeq.put("OLEDSWITCH")
-		lineobj.release()
-		chip.close()
-	except Exception:
-		writeq.put("ERROR")
+# Testing
+#argonpowerbutton_monitor(None)
