@@ -98,13 +98,9 @@ then
 	sudo systemctl stop argonupsrtcd.service
 	sudo systemctl disable argonupsrtcd.service
 
-	sudo systemctl --global stop argononeupsduser.service
-	sudo systemctl --global disable argononeupsduser.service
-
 	# Remove files
 	sudo rm /lib/systemd/system/argononeupsd.service
 	sudo rm /lib/systemd/system/argonupsrtcd.service
-	sudo rm /etc/systemd/user/argononeupsduser.service
 
 	find "/home" -maxdepth 1 -type  d | while read line; do
 		shortcutfile="$line/Desktop/argonone-ups.desktop"
@@ -113,6 +109,40 @@ then
 		fi
 	done
 fi
+
+
+# Remove UPS daemon if any
+argononeupsscript=$INSTALLATIONFOLDER/argononeupd.py
+if [ -f "$argononeupsscript" ]
+then
+	#sudo rmmod argonbatteryicon
+	# Disable Services
+	sudo systemctl stop argononeupd.service
+	sudo systemctl disable argononeupd.service
+
+	for tmpuser in `awk -F: '{ if ($3 >= 1000) print $1 }' /etc/passwd`
+	do
+		if [ "$tmpuser" != "nobody" ]
+		then
+			sudo -u "$tmpuser" systemctl --user stop argononeupduser.service
+			sudo -u "$tmpuser" systemctl --user disable argononeupduser.service
+		fi
+	done
+	systemctl --user stop argononeupduser.service
+	systemctl --user disable argononeupduser.service
+
+	# Remove files
+	sudo rm /lib/systemd/system/argononeupd.service
+	sudo rm /etc/systemd/user/argononeupduser.service
+
+	find "/home" -maxdepth 1 -type  d | while read line; do
+		shortcutfile="$line/Desktop/argononeup.desktop"
+		if [ -f "$shortcutfile" ]; then
+			sudo rm $shortcutfile
+		fi
+	done
+fi
+
 
 if [ -f "/usr/bin/argon-config" ]
 then
