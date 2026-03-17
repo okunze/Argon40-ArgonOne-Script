@@ -18,101 +18,125 @@ jobs:
         uses: actions/checkout@v4.2.2
       - name: Create ./download folder
         run: mkdir -p ./download
+      - name: Create ./download/firmware folder
+        run: mkdir -p ./download/firmware
       - name: Create ./download/oled folder
         run: mkdir -p ./download/oled
       - name: Create ./download/scripts folder
         run: mkdir -p ./download/scripts
       - name: Create ./download/tools folder
         run: mkdir -p ./download/tools
+      - name: Create ./download/ups folder
+        run: mkdir -p ./download/ups
       # https://github.com/marketplace/actions/github-action-for-wget
+      - name: Github Action for wget (ar1config.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ar1config.png -P ./download
       - name: Github Action for wget (argon1.sh)
         uses: wei/wget@v1.1.1
         with:
-           args: https://download.argon40.com/argon1.sh -P ./download
-      - name: Github Action for wget (setntpserver.sh)
+          args: https://download.argon40.com/argon1.sh -P ./download
+      - name: Github Action for wget (argon1v5.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/tools/setntpserver.sh -P ./download/tools
-      - name: Github Action for wget (argon-rpi-eeprom-config-psu.py)
+          args: https://download.argon40.com/argon1v5.sh -P ./download
+      - name: Github Action for wget (argon40.png)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argon-rpi-eeprom-config-psu.py -P ./download/scripts
-      - name: Github Action for wget (argonone-upsconfig.sh)
+          args: https://download.argon40.com/argon40.png -P ./download
+      - name: Github Action for wget (argon-eeprom.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argonone-upsconfig.sh -P ./download/scripts
-      - name: Github Action for wget (argonone-fanconfig.sh)
+          args: https://download.argon40.com/argon-eeprom.sh -P ./download
+      - name: Github Action for wget (argoneon.png)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argonone-fanconfig.sh -P ./download/scripts
-      - name: Github Action for wget (argononed.py)
+          args: https://download.argon40.com/argoneon.png -P ./download
+      - name: Github Action for wget (argonone-irdecoder.py)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argononed.py -P ./download/scripts
-      - name: Github Action for wget (argononeoledd.service)
+          args: https://download.argon40.com/argonone-irdecoder.py -P ./download
+      - name: Github Action for wget (argononeup.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argononeoledd.service -P ./download/scripts
-      - name: Github Action for wget (argononed.service)
+          args: https://download.argon40.com/argononeup.sh -P ./download
+      - name: Github Action for wget (ArgonOne.uf2)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argononed.service -P ./download/scripts
-      - name: Github Action for wget (argonone-irconfig.sh)
+          args: https://download.argon40.com/firmware/ArgonOne.uf2 -P ./download/firmware
+      - name: Github Action for wget (bgcpu.bin)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argonone-irconfig.sh -P ./download/scripts
+          args: https://download.argon40.com/oled/bgcpu.bin -P ./download/oled
+      - name: Github Action for wget (bgdefault.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/bgdefault.bin -P ./download/oled
+      - name: Github Action for wget (bgip.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/bgip.bin -P ./download/oled
+      - name: Github Action for wget (bgraid.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/bgraid.bin -P ./download/oled
+      - name: Github Action for wget (bgram.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/bgram.bin -P ./download/oled
+      - name: Github Action for wget (bgstorage.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/bgstorage.bin -P ./download/oled
+      - name: Github Action for wget (bgtemp.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/bgtemp.bin -P ./download/oled
+      - name: Github Action for wget (bgtime.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/bgtime.bin -P ./download/oled
+      - name: Github Action for wget (font16x12.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/font16x12.bin -P ./download/oled
+      - name: Github Action for wget (font16x8.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/font16x8.bin -P ./download/oled
+      - name: Github Action for wget (font24x16.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/font24x16.bin -P ./download/oled
+      - name: Github Action for wget (font32x24.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/font32x24.bin -P ./download/oled
+      - name: Github Action for wget (font48x32.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/font48x32.bin -P ./download/oled
+      - name: Github Action for wget (font64x48.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/font64x48.bin -P ./download/oled
+      - name: Github Action for wget (font8x6.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/font8x6.bin -P ./download/oled
+      - name: Github Action for wget (logo1v5.bin)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/oled/logo1v5.bin -P ./download/oled
       - name: Github Action for wget (argon-blstrdac.sh)
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argon-blstrdac.sh -P ./download/scripts
-      - name: Github Action for wget (argonstatus.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argonstatus.py -P ./download/scripts
       - name: Github Action for wget (argondashboard.py)
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argondashboard.py -P ./download/scripts
-      - name: Github Action for wget (argon-status.sh)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argon-status.sh -P ./download/scripts
-      - name: Github Action for wget (argon-versioninfo.sh)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argon-versioninfo.sh -P ./download/scripts
-      - name: Github Action for wget (argonsysinfo.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argonsysinfo.py -P ./download/scripts
-      - name: Github Action for wget (argonregister-v1.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argonregister-v1.py -P ./download/scripts
-      - name: Github Action for wget (argonregister.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argonregister.py -P ./download/scripts
-      - name: Github Action for wget (argonpowerbutton-libgpiod.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argonpowerbutton-libgpiod.py -P ./download/scripts
-      - name: Github Action for wget (argonpowerbutton-rpigpio.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argonpowerbutton-rpigpio.py -P ./download/scripts
-      - name: Github Action for wget (argon-unitconfig.sh)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argon-unitconfig.sh -P ./download/scripts
-      - name: Github Action for wget (argoneon-rtcconfig.sh)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argoneon-rtcconfig.sh -P ./download/scripts
-      - name: Github Action for wget (argonrtc.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argonrtc.py -P ./download/scripts
       - name: Github Action for wget (argoneond.py)
         uses: wei/wget@v1.1.1
         with:
@@ -125,94 +149,186 @@ jobs:
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argoneonoled.py -P ./download/scripts
-      - name: Github Action for wget (argononeoled.py)
-        uses: wei/wget@v1.1.1
-        with:
-          args: https://download.argon40.com/scripts/argononeoled.py -P ./download/scripts
       - name: Github Action for wget (argoneon-oledconfig.sh)
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argoneon-oledconfig.sh -P ./download/scripts
-      - name: Github Action for wget (font8x6.bin)
+      - name: Github Action for wget (argoneon-rtcconfig.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/font8x6.bin -P ./download/oled
-      - name: Github Action for wget (font16x12.bin)
+          args: https://download.argon40.com/scripts/argoneon-rtcconfig.sh -P ./download/scripts
+      - name: Github Action for wget (argonkeyboard.py)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/font16x12.bin -P ./download/oled
-      - name: Github Action for wget (font32x24.bin)
+          args: https://download.argon40.com/scripts/argonkeyboard.py -P ./download/scripts
+      - name: Github Action for wget (argononed.py)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/font32x24.bin -P ./download/oled
-      - name: Github Action for wget (font64x48)
+          args: https://download.argon40.com/scripts/argononed.py -P ./download/scripts
+      - name: Github Action for wget (argononed.service)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/font64x48.bin -P ./download/oled
-      - name: Github Action for wget (font16x8.bin)
+          args: https://download.argon40.com/scripts/argononed.service -P ./download/scripts
+      - name: Github Action for wget (argonone-fanconfig.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/font16x8.bin -P ./download/oled
-      - name: Github Action for wget (font24x16.bin)
+          args: https://download.argon40.com/scripts/argonone-fanconfig.sh -P ./download/scripts
+      - name: Github Action for wget (argonone-irconfig.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/font24x16.bin -P ./download/oled
-      - name: Github Action for wget (font48x32.bin)
+          args: https://download.argon40.com/scripts/argonone-irconfig.sh -P ./download/scripts
+      - name: Github Action for wget (argonone-irdecoder-libgpiod.py)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/font48x32.bin -P ./download/oled
-      - name: Github Action for wget (bgdefault.bin)
+          args: https://download.argon40.com/scripts/argonone-irdecoder-libgpiod.py -P ./download/scripts
+      - name: Github Action for wget (argononeoled.py)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgdefault.bin -P ./download/oled
-      - name: Github Action for wget (bgram.bin)
+          args: https://download.argon40.com/scripts/argononeoled.py -P ./download/scripts
+      - name: Github Action for wget (argonone-oledconfig.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgram.bin -P ./download/oled
-      - name: Github Action for wget (bgip.bin)
+          args: https://download.argon40.com/scripts/argonone-oledconfig.sh -P ./download/scripts
+      - name: Github Action for wget (argononeoledd.service)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgip.bin -P ./download/oled
-      - name: Github Action for wget (bgtemp.bin)
+          args: https://download.argon40.com/scripts/argononeoledd.service -P ./download/scripts
+      - name: Github Action for wget (argononeupd.py)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgtemp.bin -P ./download/oled
-      - name: Github Action for wget (bgcpu.bin)
+          args: https://download.argon40.com/scripts/argononeupd.py -P ./download/scripts
+      - name: Github Action for wget (argononeupd.service)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgcpu.bin -P ./download/oled
-      - name: Github Action for wget (bgraid.bin)
+          args: https://download.argon40.com/scripts/argononeupd.service -P ./download/scripts
+      - name: Github Action for wget (argononeupduser.service)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgraid.bin -P ./download/oled
-      - name: Github Action for wget (bgstorage.bin)
+          args: https://download.argon40.com/scripts/argononeupduser.service -P ./download/scripts
+      - name: Github Action for wget (argononeup-lidconfig.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgstorage.bin -P ./download/oled
-      - name: Github Action for wget (bgtime.bin)
+          args: https://download.argon40.com/scripts/argononeup-lidconfig.sh -P ./download/scripts
+      - name: Github Action for wget (argonone-upsconfig.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/bgtime.bin -P ./download/oled
-      - name: Github Action for wget (logo1v5.bin)
+          args: https://download.argon40.com/scripts/argonone-upsconfig.sh -P ./download/scripts
+      - name: Github Action for wget (argononeupsd.py)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/oled/logo1v5.bin -P ./download/oled
-      - name: Github Action for wget (argon-uninstall.sh)
+          args: https://download.argon40.com/scripts/argononeupsd.py -P ./download/scripts
+      - name: Github Action for wget (argononeupsd.service)
         uses: wei/wget@v1.1.1
         with:
-          args: https://download.argon40.com/scripts/argon-uninstall.sh -P ./download/scripts
+          args: https://download.argon40.com/scripts/argononeupsd.service -P ./download/scripts
+      - name: Github Action for wget (argonpowerbutton-libgpiod.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonpowerbutton-libgpiod.py -P ./download/scripts
+      - name: Github Action for wget (argonpowerbutton-rpigpio.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonpowerbutton-rpigpio.py -P ./download/scripts
+      - name: Github Action for wget (argonregister.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonregister.py -P ./download/scripts
+      - name: Github Action for wget (argonregister-v1.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonregister-v1.py -P ./download/scripts
+      - name: Github Action for wget (argon-rpi-eeprom-config-default.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argon-rpi-eeprom-config-default.py -P ./download/scripts
+      - name: Github Action for wget (argon-rpi-eeprom-config-psu.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argon-rpi-eeprom-config-psu.py -P ./download/scripts
+      - name: Github Action for wget (argonrtc.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonrtc.py -P ./download/scripts
       - name: Github Action for wget (argon-shutdown.sh)
         uses: wei/wget@v1.1.1
         with:
           args: https://download.argon40.com/scripts/argon-shutdown.sh -P ./download/scripts
-      - name: Github Action for wget (ar1config.png)
+      - name: Github Action for wget (argonstatus.py)
         uses: wei/wget@v1.1.1
         with:
-          args: http://download.argon40.com/ar1config.png -P ./download
-      - name: Github Action for wget (argoneon.png)
+          args: https://download.argon40.com/scripts/argonstatus.py -P ./download/scripts
+      - name: Github Action for wget (argon-status.sh)
         uses: wei/wget@v1.1.1
         with:
-          args: http://download.argon40.com/argoneon.png -P ./download
+          args: https://download.argon40.com/scripts/argon-status.sh -P ./download/scripts
+      - name: Github Action for wget (argonsysinfo.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonsysinfo.py -P ./download/scripts
+      - name: Github Action for wget (argon-uninstall.sh)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argon-uninstall.sh -P ./download/scripts
+      - name: Github Action for wget (argon-unitconfig.sh)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argon-unitconfig.sh -P ./download/scripts
+      - name: Github Action for wget (argonupsrtcd.py)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonupsrtcd.py -P ./download/scripts
+      - name: Github Action for wget (argonupsrtcd.service)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argonupsrtcd.service -P ./download/scripts
+      - name: Github Action for wget (argon-versioninfo.sh)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/scripts/argon-versioninfo.sh -P ./download/scripts
+      - name: Github Action for wget (setntpserver.sh)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/tools/setntpserver.sh -P ./download/tools
+      - name: Github Action for wget (battery_0.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_0.png -P ./download/ups
+      - name: Github Action for wget (battery_1.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_1.png -P ./download/ups
+      - name: Github Action for wget (battery_2.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_2.png -P ./download/ups
+      - name: Github Action for wget (battery_3.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_3.png -P ./download/ups
+      - name: Github Action for wget (battery_4.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_4.png -P ./download/ups
+      - name: Github Action for wget (battery_alert.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_alert.png -P ./download/ups
+      - name: Github Action for wget (battery_charging.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_charging.png -P ./download/ups
+      - name: Github Action for wget (battery_plug.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_plug.png -P ./download/ups
+      - name: Github Action for wget (battery_unknown.png)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/battery_unknown.png -P ./download/ups
+      - name: Github Action for wget (upsimg.tar.gz)
+        uses: wei/wget@v1.1.1
+        with:
+          args: https://download.argon40.com/ups/upsimg.tar.gz -P ./download/ups
       - name: Delete ./source
         run: rm -rf ./source
       - name: Rename ./download to ./source
