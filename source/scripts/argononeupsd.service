@@ -1,0 +1,14 @@
+[Unit]
+Description=Argon Industria UPS Battery Service
+DefaultDependencies=no
+
+[Install]
+WantedBy=sysinit.target
+
+[Service]
+Type=simple
+KillSignal=SIGINT
+TimeoutStopSec=8
+Restart=on-failure
+WorkingDirectory=/etc/argon/ups/
+ExecStart=/usr/bin/python3 /etc/argon/argononeupsd.py
