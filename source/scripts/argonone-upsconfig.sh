@@ -58,6 +58,12 @@ rtcdaemonscript=$INSTALLATIONFOLDER/$rtcdaemonname.py
 
 requireinstall=0
 newmode=0
+if [ ! -z "$1" ]
+then
+	requireinstall=1
+	newmode=3 # installation
+fi
+
 echo "-----------------------------------"
 echo " Argon Industria UPS Configuration"
 echo "-----------------------------------"
@@ -113,7 +119,8 @@ UPSCMDFILE="/dev/shm/upscmd.txt"
 UPSSTATUSFILE="/dev/shm/upslog.txt"
 rtcconfigscript=$INSTALLATIONFOLDER/argonups-rtcconfig.sh
 
-if [ -f "$UPSSTATUSFILE" ]
+
+if [ -f "$UPSSTATUSFILE" ] && [ -f "$rtcconfigscript" ]
 then
 #	cat $UPSSTATUSFILE
 	sudo $pythonbin $rtcdaemonscript GETBATTERY
@@ -277,8 +284,12 @@ do
 				sudo systemctl restart "$rtcdaemonname.service"
 				loopflag=0
 			fi
-			# Serial I/O is here
-			sudo systemctl restart argononed.service
+
+			if [ ! -z "$1" ]
+			then
+				# Called from setup script
+				loopflag=0
+			fi
 		elif [ $newmode -eq 4 ]
 		then
 			sudo systemctl stop "$daemonname.service"

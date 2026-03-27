@@ -93,7 +93,7 @@ try:
 
 				if prevnotifymsg != curnotifymsg:
 					notifymessage(curnotifymsg, curnotifycritical)
-					if tmp_battery <= 5 and tmp_charging != 0:
+					if tmp_battery <= 5 and tmp_charging == 0:
 						os.system("shutdown +1 """+curnotifymsg+".""")
 
 				prevnotifymsg = curnotifymsg

@@ -368,10 +368,6 @@ def ups_check(readq):
 											else:
 												#icontitle = str(device_battery)+"%"+" Left"
 												statusstr = "Battery"
-												tmp_battery = round(tmp_battery/20)
-												if tmp_battery > 4:
-													tmp_battery = 4
-												#tmpiconfile = tmpiconfile+"battery_"+str(tmp_battery)
 												tmpiconfile = tmpiconfile+"discharge_"+str(device_battery)
 											tmpiconfile = tmpiconfile + ".png"
 
